@@ -105,6 +105,8 @@ public class SecurityConfig {
                                 "/swagger.json",
                                 "/swagger-ui.html")
                         .permitAll()
+                        .requestMatchers("/error")
+                        .permitAll()
                         .requestMatchers(
                                 "/swagger-resources/**",
                                 "/webjars/**",
@@ -157,7 +159,6 @@ public class SecurityConfig {
                                 "/user/{userId}/habit",
                                 "/ownSecurity/set-password",
                                 "/email/sendReport",
-                                "/email/sendHabitNotification",
                                 "/email/addEcoNews",
                                 "/email/changePlaceStatus",
                                 "/email/general/notification")
@@ -202,6 +203,7 @@ public class SecurityConfig {
                         .hasAnyRole(UBS_EMPLOYEE)
                         .requestMatchers(HttpMethod.POST,
                                 "/user/filter",
+                                "/email/sendHabitNotification",
                                 "/ownSecurity/register")
                         .hasAnyRole(ADMIN)
                         .requestMatchers(HttpMethod.PATCH,
