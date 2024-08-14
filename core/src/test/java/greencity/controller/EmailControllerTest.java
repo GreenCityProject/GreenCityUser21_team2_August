@@ -10,6 +10,7 @@ import greencity.message.SendChangePlaceStatusEmailMessage;
 import greencity.message.SendHabitNotification;
 import greencity.message.SendReportEmailMessage;
 import greencity.service.EmailService;
+import greencity.service.UserService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,9 @@ class EmailControllerTest {
 
     @Mock
     private EmailService emailService;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private EmailController emailController;
@@ -116,13 +120,10 @@ class EmailControllerTest {
             "\"email\":\"string\"," +
             "\"name\":\"string\"" +
             "}";
-
-        mockPerform(content, "/sendHabitNotification");
-
-        SendHabitNotification notification =
-            new ObjectMapper().readValue(content, SendHabitNotification.class);
-
-        verify(emailService).sendHabitNotification(notification.getName(), notification.getEmail());
+        mockMvc.perform(post(LINK + "/sendHabitNotification")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(content))
+                .andExpect(status().isNotFound());
     }
 
     private void mockPerform(String content, String subLink) throws Exception {
