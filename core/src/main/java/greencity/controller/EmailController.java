@@ -5,6 +5,7 @@ import greencity.dto.econews.EcoNewsForSendEmailDto;
 import greencity.dto.notification.NotificationDto;
 import greencity.dto.violation.UserViolationMailDto;
 import greencity.exception.exceptions.BadRequestException;
+import greencity.exception.exceptions.NotFoundException;
 import greencity.message.SendChangePlaceStatusEmailMessage;
 import greencity.message.SendHabitNotification;
 import greencity.message.SendReportEmailMessage;
@@ -19,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import greencity.repository.UserRepo;
+
 
 @RestController
 @RequestMapping("/email")
@@ -26,6 +29,9 @@ import org.springframework.web.bind.annotation.*;
 public class EmailController {
     @Autowired
     private final EmailService emailService;
+
+    @Autowired
+    private final UserRepo userRepo;
 
     /**
      * Method for sending news for users who subscribed for updates.
@@ -36,17 +42,22 @@ public class EmailController {
     @Operation(summary = "User can publish eco-news")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = HttpStatuses.OK),
-            @ApiResponse(responseCode = "400", description = HttpStatuses.BAD_REQUEST)
+            @ApiResponse(responseCode = "400", description = HttpStatuses.BAD_REQUEST),
+            @ApiResponse(responseCode = "404", description = HttpStatuses.NOT_FOUND)
     })
     @PostMapping("/addEcoNews")
     public ResponseEntity<Object> addEcoNews(@Valid @RequestBody EcoNewsForSendEmailDto message) {
         try {
+            if (!userRepo.existsUserByEmail(message.getAuthor().getEmail())) {
+                throw new NotFoundException("User with email " + message.getAuthor().getEmail() + " not found");
+            }
             emailService.sendCreatedNewsForAuthor(message);
             return ResponseEntity.status(HttpStatus.OK).build();
         } catch (ConstraintViolationException ex) {
             throw new BadRequestException("Invalid input data", ex);
         }
     }
+
 
     /**
      * Method for sending notification to userss who subscribed for updates about
