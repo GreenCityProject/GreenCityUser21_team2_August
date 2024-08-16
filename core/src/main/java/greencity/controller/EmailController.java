@@ -1,6 +1,5 @@
 package greencity.controller;
 
-import greencity.annotations.CurrentUser;
 import greencity.constant.HttpStatuses;
 import greencity.dto.econews.EcoNewsForSendEmailDto;
 import greencity.dto.notification.NotificationDto;
@@ -12,7 +11,6 @@ import greencity.message.SendReportEmailMessage;
 import greencity.service.EmailService;
 import greencity.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
@@ -73,12 +71,7 @@ public class EmailController {
             @ApiResponse(responseCode = "404", description = HttpStatuses.NOT_FOUND)
     })
     @PostMapping("/changePlaceStatus")
-    public ResponseEntity<Object> changePlaceStatus(@Parameter(hidden = true) @CurrentUser UserVO userVO,
-                                                    @Valid @RequestBody SendChangePlaceStatusEmailMessage message) {
-
-        if (userVO == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+    public ResponseEntity<Object> changePlaceStatus(@Valid @RequestBody SendChangePlaceStatusEmailMessage message) {
         Optional<UserVO> userByEmail = Optional.ofNullable(userService.findByEmail(message.getAuthorEmail()));
         if (userByEmail.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
