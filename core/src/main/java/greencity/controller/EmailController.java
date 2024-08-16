@@ -15,7 +15,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -66,13 +65,15 @@ public class EmailController {
      * @author Taras Kavkalo
      */
     @PostMapping("/changePlaceStatus")
-    public ResponseEntity<Object> changePlaceStatus(@Parameter(hidden = true) @CurrentUser UserVO userVO, @RequestBody SendChangePlaceStatusEmailMessage message) {
+    public ResponseEntity<Object> changePlaceStatus(@Parameter(hidden = true) @CurrentUser UserVO userVO,
+                                                    @RequestBody SendChangePlaceStatusEmailMessage message) {
+
+        if (userVO == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         Optional<UserVO> userByEmail = Optional.ofNullable(userService.findByEmail(message.getAuthorEmail()));
         if (userByEmail.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-        if (userVO == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         emailService.sendChangePlaceStatusEmail(message.getAuthorFirstName(), message.getPlaceName(),
             message.getPlaceStatus(), message.getAuthorEmail());

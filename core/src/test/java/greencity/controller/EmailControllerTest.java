@@ -5,11 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import greencity.dto.econews.EcoNewsForSendEmailDto;
 import greencity.dto.notification.NotificationDto;
+import greencity.dto.user.UserVO;
 import greencity.dto.violation.UserViolationMailDto;
 import greencity.message.SendChangePlaceStatusEmailMessage;
 import greencity.message.SendHabitNotification;
 import greencity.message.SendReportEmailMessage;
 import greencity.service.EmailService;
+import greencity.service.UserService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -33,6 +35,9 @@ class EmailControllerTest {
 
     @Mock
     private EmailService emailService;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private EmailController emailController;
@@ -100,6 +105,9 @@ class EmailControllerTest {
             "\"placeStatus\":\"string\"" +
             "}";
 
+        UserVO userVO = new UserVO(); // Создайте пример UserVO
+        when(userService.findByEmail("string")).thenReturn(userVO);
+
         mockPerform(content, "/changePlaceStatus");
 
         SendChangePlaceStatusEmailMessage message =
@@ -108,6 +116,38 @@ class EmailControllerTest {
         verify(emailService).sendChangePlaceStatusEmail(
             message.getAuthorFirstName(), message.getPlaceName(),
             message.getPlaceStatus(), message.getAuthorEmail());
+    }
+
+    @Test
+    void changePlaceStatusShouldReturnNotFound() throws Exception {
+        String content = "{" +
+                "\"authorEmail\":\"Admin1@gmail.com\"," +
+                "\"authorFirstName\":\"Test\"," +
+                "\"placeName\":\"hoho\"," +
+                "\"placeStatus\":\"string\"" +
+                "}";
+
+        lenient().when(userService.findByEmail("Admin1@gmail.com")).thenReturn(null);
+
+        mockMvc.perform(post("/changePlaceStatus")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(content))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void changePlaceStatusShouldReturnBadRequest() throws Exception {
+        String content = "{" +
+                "\"authorEmail\":\"Admin1gmail.com\"," +
+                "\"authorFirstName\":\"Test\"," +
+                "\"placeName\":\"hoho\"," +
+                "\"placeStatus\":\"string\"" +
+                "}";
+
+        mockMvc.perform(post("/changePlaceStatus")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(content))
+                .andExpect(status().isNotFound());
     }
 
     @Test
