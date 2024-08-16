@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -64,9 +65,16 @@ public class EmailController {
      * @param message - object with all necessary data for sending email
      * @author Taras Kavkalo
      */
+    @Operation(summary = "User can change place status")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = HttpStatuses.OK),
+            @ApiResponse(responseCode = "400", description = HttpStatuses.BAD_REQUEST),
+            @ApiResponse(responseCode = "401", description = HttpStatuses.UNAUTHORIZED),
+            @ApiResponse(responseCode = "404", description = HttpStatuses.NOT_FOUND)
+    })
     @PostMapping("/changePlaceStatus")
     public ResponseEntity<Object> changePlaceStatus(@Parameter(hidden = true) @CurrentUser UserVO userVO,
-                                                    @RequestBody SendChangePlaceStatusEmailMessage message) {
+                                                    @Valid @RequestBody SendChangePlaceStatusEmailMessage message) {
 
         if (userVO == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
