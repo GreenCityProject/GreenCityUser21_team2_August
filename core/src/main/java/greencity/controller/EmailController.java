@@ -3,6 +3,7 @@ package greencity.controller;
 import greencity.constant.HttpStatuses;
 import greencity.dto.econews.EcoNewsForSendEmailDto;
 import greencity.dto.notification.NotificationDto;
+import greencity.dto.user.UserVO;
 import greencity.dto.violation.UserViolationMailDto;
 import greencity.exception.exceptions.BadRequestException;
 import greencity.exception.exceptions.NotFoundException;
@@ -10,6 +11,7 @@ import greencity.message.SendChangePlaceStatusEmailMessage;
 import greencity.message.SendHabitNotification;
 import greencity.message.SendReportEmailMessage;
 import greencity.service.EmailService;
+import greencity.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -31,7 +33,7 @@ public class EmailController {
     private final EmailService emailService;
 
     @Autowired
-    private final UserRepo userRepo;
+    private final UserService userService;
 
     /**
      * Method for sending news for users who subscribed for updates.
@@ -48,8 +50,9 @@ public class EmailController {
     @PostMapping("/addEcoNews")
     public ResponseEntity<Object> addEcoNews(@Valid @RequestBody EcoNewsForSendEmailDto message) {
         try {
-            if (!userRepo.existsUserByEmail(message.getAuthor().getEmail())) {
-                throw new NotFoundException("User with email " + message.getAuthor().getEmail() + " not found");
+            UserVO user = userService.findByEmail(message.getAuthor().getEmail());
+            if (user == null) {
+                throw new NotFoundException("User with email " + message.getAuthor().getEmail() + " was not found");
             }
             emailService.sendCreatedNewsForAuthor(message);
             return ResponseEntity.status(HttpStatus.OK).build();
@@ -57,7 +60,6 @@ public class EmailController {
             throw new BadRequestException("Invalid input data", ex);
         }
     }
-
 
     /**
      * Method for sending notification to userss who subscribed for updates about
