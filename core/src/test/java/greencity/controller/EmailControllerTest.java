@@ -129,7 +129,7 @@ class EmailControllerTest {
 
         lenient().when(userService.findByEmail("Admin1@gmail.com")).thenReturn(null);
 
-        mockMvc.perform(post("/changePlaceStatus")
+        mockMvc.perform(post(LINK + "/changePlaceStatus")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(content))
                 .andExpect(status().isNotFound());
@@ -138,16 +138,16 @@ class EmailControllerTest {
     @Test
     void changePlaceStatusShouldReturnBadRequest() throws Exception {
         String content = "{" +
-                "\"authorEmail\":\"Admin1gmail.com\"," +
+                "\"authorEmail\":\"invalid-email-format\"," +
                 "\"authorFirstName\":\"Test\"," +
                 "\"placeName\":\"hoho\"," +
                 "\"placeStatus\":\"string\"" +
                 "}";
 
-        mockMvc.perform(post("/changePlaceStatus")
+        mockMvc.perform(post(LINK + "/changePlaceStatus")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(content))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
