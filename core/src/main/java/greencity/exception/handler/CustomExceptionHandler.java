@@ -117,9 +117,12 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
      * @author Marian Milian
      */
     @ExceptionHandler(NotFoundException.class)
-    public final ResponseEntity<Object> handleNotFoundException(NotFoundException ex,
-        WebRequest request) {
-        ExceptionResponse exceptionResponse = new ExceptionResponse(getErrorAttributes(request));
+    public final ResponseEntity<Object> handleNotFoundException(NotFoundException ex, WebRequest request) {
+
+        Map<String, Object> errorAttributes = getErrorAttributes(request);
+        errorAttributes.put("message", ex.getMessage());
+
+        ExceptionResponse exceptionResponse = new ExceptionResponse(errorAttributes);
         log.trace(ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionResponse);
     }

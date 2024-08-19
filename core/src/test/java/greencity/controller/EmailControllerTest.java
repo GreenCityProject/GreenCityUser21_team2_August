@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import greencity.dto.econews.EcoNewsForSendEmailDto;
 import greencity.dto.notification.NotificationDto;
-import greencity.dto.user.UserVO;
 import greencity.dto.violation.UserViolationMailDto;
 import greencity.message.SendChangePlaceStatusEmailMessage;
 import greencity.message.SendHabitNotification;
@@ -35,9 +34,6 @@ class EmailControllerTest {
 
     @Mock
     private EmailService emailService;
-
-    @Mock
-    private UserService userService;
 
     @InjectMocks
     private EmailController emailController;
@@ -105,9 +101,6 @@ class EmailControllerTest {
             "\"placeStatus\":\"string\"" +
             "}";
 
-        UserVO userVO = new UserVO();
-        when(userService.findByEmail("Admin1@gmail.com")).thenReturn(userVO);
-
         mockPerform(content, "/changePlaceStatus");
 
         SendChangePlaceStatusEmailMessage message =
@@ -116,23 +109,6 @@ class EmailControllerTest {
         verify(emailService).sendChangePlaceStatusEmail(
             message.getAuthorFirstName(), message.getPlaceName(),
             message.getPlaceStatus(), message.getAuthorEmail());
-    }
-
-    @Test
-    void changePlaceStatusShouldReturnNotFound() throws Exception {
-        String content = "{" +
-                "\"authorEmail\":\"Admin1@gmail.com\"," +
-                "\"authorFirstName\":\"Test\"," +
-                "\"placeName\":\"hoho\"," +
-                "\"placeStatus\":\"string\"" +
-                "}";
-
-        lenient().when(userService.findByEmail("Admin1@gmail.com")).thenReturn(null);
-
-        mockMvc.perform(post(LINK + "/changePlaceStatus")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(content))
-                .andExpect(status().isNotFound());
     }
 
     @Test

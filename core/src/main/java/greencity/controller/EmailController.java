@@ -3,7 +3,6 @@ package greencity.controller;
 import greencity.constant.HttpStatuses;
 import greencity.dto.econews.EcoNewsForSendEmailDto;
 import greencity.dto.notification.NotificationDto;
-import greencity.dto.user.UserVO;
 import greencity.dto.violation.UserViolationMailDto;
 import greencity.message.SendChangePlaceStatusEmailMessage;
 import greencity.message.SendHabitNotification;
@@ -20,7 +19,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/email")
@@ -28,8 +26,6 @@ import java.util.Optional;
 public class EmailController {
     @Autowired
     private final EmailService emailService;
-    @Autowired
-    private final UserService userService;
 
     /**
      * Method for sending news for users who subscribed for updates.
@@ -72,10 +68,6 @@ public class EmailController {
     })
     @PostMapping("/changePlaceStatus")
     public ResponseEntity<Object> changePlaceStatus(@Valid @RequestBody SendChangePlaceStatusEmailMessage message) {
-        Optional<UserVO> userByEmail = Optional.ofNullable(userService.findByEmail(message.getAuthorEmail()));
-        if (userByEmail.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
         emailService.sendChangePlaceStatusEmail(message.getAuthorFirstName(), message.getPlaceName(),
             message.getPlaceStatus(), message.getAuthorEmail());
         return ResponseEntity.status(HttpStatus.OK).build();

@@ -82,9 +82,12 @@ public class EmailServiceImpl implements EmailService {
         model.put(EmailConstants.USER_NAME, authorName);
         model.put(EmailConstants.PLACE_NAME, placeName);
         model.put(EmailConstants.STATUS, placeStatus);
-
-        String template = createEmailTemplate(model, EmailConstants.CHANGE_PLACE_STATUS_EMAIL_PAGE);
-        sendEmail(authorEmail, EmailConstants.GC_CONTRIBUTORS, template);
+        if (userRepo.findByEmail(authorEmail).isPresent()) {
+            String template = createEmailTemplate(model, EmailConstants.CHANGE_PLACE_STATUS_EMAIL_PAGE);
+            sendEmail(authorEmail, EmailConstants.GC_CONTRIBUTORS, template);
+        }else {
+            throw new NotFoundException("User with email " + authorEmail + " not found");
+        }
     }
 
     @Override
