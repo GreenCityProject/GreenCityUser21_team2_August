@@ -99,14 +99,14 @@ class EmailControllerTest {
     @Test
     void changePlaceStatus() throws Exception {
         String content = "{" +
-            "\"authorEmail\":\"string\"," +
+            "\"authorEmail\":\"Admin1@gmail.com\"," +
             "\"authorFirstName\":\"string\"," +
             "\"placeName\":\"string\"," +
             "\"placeStatus\":\"string\"" +
             "}";
 
-        UserVO userVO = new UserVO(); // Создайте пример UserVO
-        when(userService.findByEmail("string")).thenReturn(userVO);
+        UserVO userVO = new UserVO();
+        when(userService.findByEmail("Admin1@gmail.com")).thenReturn(userVO);
 
         mockPerform(content, "/changePlaceStatus");
 
