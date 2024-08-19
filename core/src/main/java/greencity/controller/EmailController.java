@@ -3,19 +3,27 @@ package greencity.controller;
 import greencity.constant.HttpStatuses;
 import greencity.dto.econews.EcoNewsForSendEmailDto;
 import greencity.dto.notification.NotificationDto;
+import greencity.dto.user.UserVO;
 import greencity.dto.violation.UserViolationMailDto;
+import greencity.exception.exceptions.BadRequestException;
+import greencity.exception.exceptions.NotFoundException;
 import greencity.message.SendChangePlaceStatusEmailMessage;
 import greencity.message.SendHabitNotification;
 import greencity.message.SendReportEmailMessage;
 import greencity.service.EmailService;
+import greencity.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import greencity.repository.UserRepo;
+
 
 @RestController
 @RequestMapping("/email")
@@ -24,16 +32,33 @@ public class EmailController {
     @Autowired
     private final EmailService emailService;
 
+    @Autowired
+    private final UserService userService;
+
     /**
      * Method for sending news for users who subscribed for updates.
      *
      * @param message - object with all necessary data for sending email
      * @author Taras Kavkalo
      */
+    @Operation(summary = "User can publish eco-news")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = HttpStatuses.OK),
+            @ApiResponse(responseCode = "400", description = HttpStatuses.BAD_REQUEST),
+            @ApiResponse(responseCode = "404", description = HttpStatuses.NOT_FOUND)
+    })
     @PostMapping("/addEcoNews")
-    public ResponseEntity<Object> addEcoNews(@RequestBody EcoNewsForSendEmailDto message) {
-        emailService.sendCreatedNewsForAuthor(message);
-        return ResponseEntity.status(HttpStatus.OK).build();
+    public ResponseEntity<Object> addEcoNews(@Valid @RequestBody EcoNewsForSendEmailDto message) {
+        try {
+            UserVO user = userService.findByEmail(message.getAuthor().getEmail());
+            if (user == null) {
+                throw new NotFoundException("User with email " + message.getAuthor().getEmail() + " was not found");
+            }
+            emailService.sendCreatedNewsForAuthor(message);
+            return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (ConstraintViolationException ex) {
+            throw new BadRequestException("Invalid input data", ex);
+        }
     }
 
     /**
