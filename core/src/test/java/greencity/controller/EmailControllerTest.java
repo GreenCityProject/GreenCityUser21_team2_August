@@ -10,6 +10,7 @@ import greencity.message.SendChangePlaceStatusEmailMessage;
 import greencity.message.SendHabitNotification;
 import greencity.message.SendReportEmailMessage;
 import greencity.service.EmailService;
+import greencity.service.UserService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -94,7 +95,7 @@ class EmailControllerTest {
     @Test
     void changePlaceStatus() throws Exception {
         String content = "{" +
-            "\"authorEmail\":\"string\"," +
+            "\"authorEmail\":\"Admin1@gmail.com\"," +
             "\"authorFirstName\":\"string\"," +
             "\"placeName\":\"string\"," +
             "\"placeStatus\":\"string\"" +
@@ -108,6 +109,21 @@ class EmailControllerTest {
         verify(emailService).sendChangePlaceStatusEmail(
             message.getAuthorFirstName(), message.getPlaceName(),
             message.getPlaceStatus(), message.getAuthorEmail());
+    }
+
+    @Test
+    void changePlaceStatusShouldReturnBadRequest() throws Exception {
+        String content = "{" +
+                "\"authorEmail\":\"invalid-email-format\"," +
+                "\"authorFirstName\":\"Test\"," +
+                "\"placeName\":\"hoho\"," +
+                "\"placeStatus\":\"string\"" +
+                "}";
+
+        mockMvc.perform(post(LINK + "/changePlaceStatus")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(content))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
