@@ -247,8 +247,14 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendHabitNotification(String name, String email) {
+        if (!userRepo.existsUserByEmail(email)) {
+             throw new NotFoundException(ErrorMessage.USER_NOT_FOUND_BY_EMAIL + email);
+        }
         String subject = "Notification about not marked habits";
         String content = "Dear " + name + ", you haven't marked any habit during last 3 days";
+        if (userRepo.findByEmail(email).isEmpty()) {
+            throw new NotFoundException(ErrorMessage.USER_NOT_FOUND_BY_EMAIL + email);
+        }
         sendEmail(email, subject, content);
     }
 

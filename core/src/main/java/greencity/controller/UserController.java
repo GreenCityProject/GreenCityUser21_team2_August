@@ -35,10 +35,13 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import springfox.documentation.annotations.ApiIgnore;
+
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/user")
@@ -209,7 +212,10 @@ public class UserController {
         @ApiResponse(responseCode = "403", description = HttpStatuses.FORBIDDEN)
     })
     @GetMapping
-    public ResponseEntity<UserUpdateDto> getUserByPrincipal(@ApiIgnore @AuthenticationPrincipal Principal principal) {
+    public ResponseEntity<UserUpdateDto> getUserByPrincipal(@ApiIgnore  Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         String email = principal.getName();
         return ResponseEntity.status(HttpStatus.OK).body(userService.getUserUpdateDtoByEmail(email));
     }
@@ -371,6 +377,7 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = HttpStatuses.OK),
         @ApiResponse(responseCode = "400", description = HttpStatuses.BAD_REQUEST),
         @ApiResponse(responseCode = "401", description = HttpStatuses.UNAUTHORIZED),
+        @ApiResponse(responseCode = "404",description = HttpStatuses.NOT_FOUND)
     })
     @GetMapping("isOnline/{userId}/")
     public ResponseEntity<Boolean> checkIfTheUserIsOnline(
@@ -410,10 +417,22 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = HttpStatuses.OK),
         @ApiResponse(responseCode = "400", description = HttpStatuses.BAD_REQUEST),
         @ApiResponse(responseCode = "401", description = HttpStatuses.UNAUTHORIZED),
+        @ApiResponse(responseCode = "404", description = HttpStatuses.NOT_FOUND)
     })
     @GetMapping("/findByEmail")
-    public ResponseEntity<UserVO> findByEmail(@RequestParam String email) {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.findByEmail(email));
+    public ResponseEntity<UserVO> findByEmail(@Valid @RequestParam String email) {
+        String emailRegex = "^[\\w.%+-]+@[\\w.-]+\\.[a-zA-Z]{2,}$";
+        Pattern pattern = Pattern.compile(emailRegex);
+
+        if (!pattern.matcher(email).matches()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        UserVO userVO = userService.findByEmail(email);
+        if (userVO == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(userVO);
     }
 
     /**
@@ -427,6 +446,7 @@ public class UserController {
         @ApiResponse(responseCode = "200", description = HttpStatuses.OK),
         @ApiResponse(responseCode = "400", description = HttpStatuses.BAD_REQUEST),
         @ApiResponse(responseCode = "401", description = HttpStatuses.UNAUTHORIZED),
+        @ApiResponse(responseCode = "404", description = HttpStatuses.NOT_FOUND)
     })
     @GetMapping("/findById")
     public ResponseEntity<UserVO> findById(@RequestParam Long id) {
@@ -531,7 +551,7 @@ public class UserController {
      * @return {@link Long}.
      * @author Orest Mamchuk
      */
-    @Operation(summary = "Get User by id")
+    @Operation(summary = "Get Id by email")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = HttpStatuses.OK),
         @ApiResponse(responseCode = "400", description = HttpStatuses.BAD_REQUEST),

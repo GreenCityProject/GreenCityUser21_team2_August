@@ -1,21 +1,24 @@
 package greencity.dto.user;
 
-import java.io.Serializable;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
 
-@NoArgsConstructor
+
 @AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode
+@ToString
 @Builder
-public class PlaceAuthorDto implements Serializable {
+@EqualsAndHashCode
+public class PlaceAuthorDto {
     private Long id;
+
+    @NotBlank(message = "Name cannot be blank")
     private String name;
+
+    @Email(message = "Email should be valid")
+    @NotBlank(message = "Email cannot be blank")
     private String email;
 }
