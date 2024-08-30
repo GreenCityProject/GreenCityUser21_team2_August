@@ -6,6 +6,7 @@ import greencity.constant.LogMessage;
 import greencity.dto.category.CategoryDto;
 import greencity.dto.econews.AddEcoNewsDtoResponse;
 import greencity.dto.econews.EcoNewsForSendEmailDto;
+import greencity.dto.events.EventForSendEmailDto;
 import greencity.dto.newssubscriber.NewsSubscriberResponseDto;
 import greencity.dto.notification.NotificationDto;
 import greencity.dto.place.PlaceNotificationDto;
@@ -47,6 +48,7 @@ public class EmailServiceImpl implements EmailService {
     private final Executor executor;
     private final String clientLink;
     private final String ecoNewsLink;
+    private final String eventLink;
     private final String serverLink;
     private final String senderEmailAddress;
     private static final String PARAM_USER_ID = "&user_id=";
@@ -69,6 +71,7 @@ public class EmailServiceImpl implements EmailService {
         this.executor = executor;
         this.clientLink = clientLink;
         this.ecoNewsLink = ecoNewsLink;
+        this.eventLink = serverLink;
         this.serverLink = serverLink;
         this.senderEmailAddress = senderEmailAddress;
     }
@@ -140,6 +143,22 @@ public class EmailServiceImpl implements EmailService {
         }
         String template = createEmailTemplate(model, EmailConstants.NEWS_RECEIVE_EMAIL_PAGE);
         sendEmail(newDto.getAuthor().getEmail(), EmailConstants.CREATED_NEWS, template);
+    }
+
+    @Override
+    public void sendCreatedEventForAuthor(EventForSendEmailDto newDto) {
+        Map<String, Object> model = new HashMap<>();
+        model.put(EmailConstants.EVENT_LINK, eventLink);
+        model.put(EmailConstants.EVENT_RESULT, newDto);
+        try {
+            model.put(EmailConstants.UNSUBSCRIBE_LINK, serverLink + "/newSubscriber/unsubscribe?email="
+                    + URLEncoder.encode(newDto.getAuthor().getEmail(), StandardCharsets.UTF_8.toString())
+                    + "&unsubscribeToken=" + newDto.getUnsubscribeToken());
+        } catch (UnsupportedEncodingException e) {
+            log.error(e.getMessage());
+        }
+        String template = createEmailTemplate(model, EmailConstants.EVENT_RECEIVE_EMAIL_PAGE);
+        sendEmail(newDto.getAuthor().getEmail(), EmailConstants.CREATED_EVENT, template);
     }
 
     /**

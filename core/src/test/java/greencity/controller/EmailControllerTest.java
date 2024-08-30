@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import greencity.dto.econews.EcoNewsForSendEmailDto;
+import greencity.dto.events.EventForSendEmailDto;
 import greencity.dto.notification.NotificationDto;
+import greencity.dto.user.UserVO;
 import greencity.dto.violation.UserViolationMailDto;
 import greencity.message.SendChangePlaceStatusEmailMessage;
 import greencity.message.SendHabitNotification;
@@ -15,6 +17,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,6 +26,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -31,6 +35,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class EmailControllerTest {
     private static final String LINK = "/email";
     private MockMvc mockMvc;
+
+    @Mock
+    private UserService userService;
 
     @Mock
     private EmailService emailService;
@@ -66,6 +73,58 @@ class EmailControllerTest {
 
         verify(emailService).sendCreatedNewsForAuthor(message);
     }
+
+    @Test
+    void addEvent() throws Exception {
+        UserVO mockUser = new UserVO();
+        mockUser.setId(1L);
+        mockUser.setEmail("test.email@gmail.com");
+        mockUser.setName("John Doe");
+
+        when(userService.findByEmail("test.email@gmail.com")).thenReturn(mockUser);
+
+        String content =
+                "{\"unsubscribeToken\":\"string\"," +
+                        "\"title\":\"Sample Event Title\"," +
+                        "\"description\":\"Sample event description\"," +
+                        "\"imagePaths\":[\"path/to/image1.jpg\", \"path/to/image2.jpg\"]," +
+                        "\"datesLocations\":[" +
+                        "{\"startDate\":\"2021-02-05T15:10:22.434Z\"," +
+                        "\"finishDate\":\"2021-02-05T17:10:22.434Z\"," +
+                        "\"coordinates\":{\"latitude\":50.4501,\"longitude\":30.5234}," +
+                        "\"onlineLink\":\"https://example.com\"}" +
+                        "]," +
+                        "\"author\":{" +
+                        "\"id\":0," +
+                        "\"name\":\"John Doe\"," +
+                        "\"email\":\"test.email@gmail.com\"" +
+                        "}" +
+                        "}";
+
+        mockMvc.perform(post(LINK + "/addEvent")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(content))
+                .andExpect(status().isOk());
+
+        verify(userService).findByEmail("test.email@gmail.com");
+
+        ArgumentCaptor<EventForSendEmailDto> captor = ArgumentCaptor.forClass(EventForSendEmailDto.class);
+        verify(emailService).sendCreatedEventForAuthor(captor.capture());
+
+        EventForSendEmailDto expectedMessage = new ObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .registerModule(new JavaTimeModule())
+                .readValue(content, EventForSendEmailDto.class);
+
+        EventForSendEmailDto actualMessage = captor.getValue();
+
+        assertEquals(expectedMessage.getTitle(), actualMessage.getTitle());
+        assertEquals(expectedMessage.getDescription(), actualMessage.getDescription());
+        assertEquals(expectedMessage.getImagePaths(), actualMessage.getImagePaths());
+        assertEquals(expectedMessage.getDatesLocations(), actualMessage.getDatesLocations());
+        assertEquals(expectedMessage.getAuthor(), actualMessage.getAuthor());
+    }
+
 
     @Test
     void sendReport() throws Exception {
