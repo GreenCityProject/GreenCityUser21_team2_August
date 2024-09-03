@@ -88,4 +88,6 @@ public interface OwnSecurityService {
      * @param email {@link String} email of user.
      */
     void setPassword(SetPasswordDto dto, String email);
+
+    void resetPassword(ResetPasswordDto dto, String email);
 }
