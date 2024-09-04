@@ -2,6 +2,7 @@ package greencity.controller;
 
 import greencity.constant.HttpStatuses;
 import greencity.dto.econews.EcoNewsForSendEmailDto;
+import greencity.dto.events.EventForSendEmailDto;
 import greencity.dto.notification.NotificationDto;
 import greencity.dto.user.UserVO;
 import greencity.dto.violation.UserViolationMailDto;
@@ -54,6 +55,32 @@ public class EmailController {
                 throw new NotFoundException("User with email " + message.getAuthor().getEmail() + " was not found");
             }
             emailService.sendCreatedNewsForAuthor(message);
+            return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (ConstraintViolationException ex) {
+            throw new BadRequestException("Invalid input data", ex);
+        }
+    }
+
+    /**
+     * Method for sending emails for users who create an event.
+     *
+     * @param message - object with all necessary data for sending email
+     *
+     */
+    @Operation(summary = "User can publish event")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = HttpStatuses.OK),
+            @ApiResponse(responseCode = "400", description = HttpStatuses.BAD_REQUEST),
+            @ApiResponse(responseCode = "404", description = HttpStatuses.NOT_FOUND)
+    })
+    @PostMapping("/addEvent")
+    public ResponseEntity<Object> addEvent(@Valid @RequestBody EventForSendEmailDto message) {
+        try {
+            UserVO user = userService.findByEmail(message.getAuthor().getEmail());
+            if (user == null) {
+                throw new NotFoundException("User with email " + message.getAuthor().getEmail() + " was not found");
+            }
+            emailService.sendCreatedEventForAuthor(message);
             return ResponseEntity.status(HttpStatus.OK).build();
         } catch (ConstraintViolationException ex) {
             throw new BadRequestException("Invalid input data", ex);

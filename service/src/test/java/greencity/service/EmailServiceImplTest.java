@@ -4,9 +4,11 @@ import greencity.ModelUtils;
 import greencity.dto.category.CategoryDto;
 import greencity.dto.econews.AddEcoNewsDtoResponse;
 import greencity.dto.econews.EcoNewsForSendEmailDto;
+import greencity.dto.events.EventForSendEmailDto;
 import greencity.dto.newssubscriber.NewsSubscriberResponseDto;
 import greencity.dto.notification.NotificationDto;
 import greencity.dto.place.PlaceNotificationDto;
+import greencity.dto.user.EventAuthorDto;
 import greencity.dto.user.PlaceAuthorDto;
 import greencity.dto.user.UserActivationDto;
 import greencity.dto.user.UserDeactivationReasonDto;
@@ -88,6 +90,16 @@ class EmailServiceImplTest {
         placeAuthorDto.setEmail("test@gmail.com");
         dto.setAuthor(placeAuthorDto);
         service.sendCreatedNewsForAuthor(dto);
+        verify(javaMailSender).createMimeMessage();
+    }
+
+    @Test
+    void sendCreatedEventForAuthorTest() {
+        EventForSendEmailDto dto = new EventForSendEmailDto();
+        EventAuthorDto eventAuthorDto = new EventAuthorDto();
+        eventAuthorDto.setEmail("test@gmail.com");
+        dto.setAuthor(eventAuthorDto);
+        service.sendCreatedEventForAuthor(dto);
         verify(javaMailSender).createMimeMessage();
     }
 
