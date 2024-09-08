@@ -28,8 +28,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.Locale;
 import java.util.Optional;
+
 import static greencity.constant.ErrorMessage.*;
 import static greencity.constant.ValidationConstants.USER_CREATED;
 
@@ -190,7 +192,7 @@ public class OwnSecurityController {
         @ApiResponse(responseCode = "400", description = PASSWORD_DOES_NOT_MATCH)
     })
     @PostMapping("/updatePassword")
-    public ResponseEntity<Object> changePassword(@Valid @RequestBody OwnRestoreDto form) {
+    public ResponseEntity<Object> resetPassword(@Valid @RequestBody OwnRestoreDto form) {
         passwordRecoveryService.updatePasswordUsingToken(form);
         return ResponseEntity.ok().build();
     }
@@ -273,5 +275,23 @@ public class OwnSecurityController {
         String email = authentication.getName();
         service.setPassword(dto, email);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+
+    @Operation(summary = "Reset password for user.")
+    @ResponseStatus(value = HttpStatus.OK)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = HttpStatuses.OK),
+            @ApiResponse(responseCode = "400", description = HttpStatuses.BAD_REQUEST),
+            @ApiResponse(responseCode = "401", description = HttpStatuses.UNAUTHORIZED)
+    })
+    @PostMapping("/reset-password")
+    public ResponseEntity<Object> resetPassword(@Valid @RequestBody ResetPasswordDto dto) {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+
+        service.resetPassword(dto, email);
+        return ResponseEntity.status(HttpStatus.OK).build();
+
     }
 }

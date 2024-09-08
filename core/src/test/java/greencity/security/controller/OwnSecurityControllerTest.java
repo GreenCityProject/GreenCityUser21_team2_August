@@ -1,10 +1,8 @@
 package greencity.security.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import greencity.ModelUtils;
-import greencity.security.dto.ownsecurity.EmployeeSignUpDto;
-import greencity.security.dto.ownsecurity.OwnRestoreDto;
-import greencity.security.dto.ownsecurity.OwnSignInDto;
-import greencity.security.dto.ownsecurity.OwnSignUpDto;
+import greencity.security.dto.ownsecurity.*;
 import greencity.security.service.OwnSecurityService;
 import greencity.security.service.PasswordRecoveryService;
 import greencity.security.service.VerifyEmailService;
@@ -16,9 +14,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import static org.mockito.Mockito.verify;
+
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -141,9 +143,9 @@ class OwnSecurityControllerTest {
               "confirmPassword": "String123=",
               "password": "String124=",
               "token": "12345",
-              "isUbs": "false"
-            }\
-            """;
+                                      "isUbs": "false"
+                                    }\
+                                    """;
 
         OwnRestoreDto form = new OwnRestoreDto("String124=", "String123=", "12345", false);
 
@@ -154,6 +156,60 @@ class OwnSecurityControllerTest {
 
         verify(passwordRecoveryService).updatePasswordUsingToken(form);
     }
+    @Test
+    void setPasswordTest_Success() throws Exception {
+        String jsonContent = """
+        {
+            "password": "newPassword123=",
+            "confirmPassword": "newPassword123="
+        }
+        """;
+
+        setupMockSecurityContext();
+        doNothing().when(ownSecurityService).setPassword(any(SetPasswordDto.class), anyString());
+
+        mockMvc.perform(post(LINK + "/set-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonContent))
+                .andExpect(status().isCreated());
+
+        verify(ownSecurityService).setPassword(any(SetPasswordDto.class), anyString());
+    }
+
+    @Test
+    void resetPasswordTest() throws Exception {
+        String content = """
+            {
+              "currentPassword": "CurrentString123=",
+              "newPassword": "NewString123=",
+              "confirmPassword": "NewString123="
+            }\
+            """;
+
+        ResetPasswordDto dto = ModelUtils.getObjectMapper().readValue(content, ResetPasswordDto.class);
+
+        setupMockSecurityContext();
+        doNothing().when(ownSecurityService).resetPassword(dto, "test@mail.com");
+
+        mockMvc.perform(post(LINK+ "/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(content))
+                .andExpect(status().isOk());
+
+        verify(ownSecurityService).resetPassword(dto, "test@mail.com");
+    }
+
+    private void setupMockSecurityContext() {
+        Authentication authentication = mock(Authentication.class);
+        SecurityContext securityContext = mock(SecurityContext.class);
+
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        lenient().when(authentication.getName()).thenReturn("test@mail.com");
+
+        SecurityContextHolder.setContext(securityContext);
+    }
+
+
 
 //    @Test
 //    void updatePasswordTest() throws Exception {

@@ -1,16 +1,8 @@
 package greencity.exception.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import greencity.exception.exceptions.BadRequestException;
-import greencity.exception.exceptions.BadSocialNetworkLinksException;
-import greencity.exception.exceptions.BadUserStatusException;
-import greencity.exception.exceptions.EmailNotVerified;
-import greencity.exception.exceptions.InvalidURLException;
-import greencity.exception.exceptions.NotFoundException;
-import greencity.exception.exceptions.UserAlreadyRegisteredException;
-import greencity.exception.exceptions.WrongEmailException;
-import greencity.exception.exceptions.WrongIdException;
-import greencity.exception.exceptions.WrongPasswordException;
+import greencity.exception.exceptions.*;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -104,6 +96,24 @@ class CustomExceptionHandlerTest {
             any(ErrorAttributeOptions.class))).thenReturn(objectMap);
         assertEquals(customExceptionHandler.handleEmailNotVerified(emailNotVerified, webRequest),
             ResponseEntity.status(HttpStatus.FORBIDDEN).body(exceptionResponse));
+    }
+
+    @Test
+    void handlePasswordSameAsOldExceptionTest() {
+        String expectedErrorMessage = "testMessage";
+        HttpStatus expectedHttpStatus = HttpStatus.BAD_REQUEST;
+        PasswordSameAsOldException passwordSameAsOldException = new PasswordSameAsOldException(expectedErrorMessage);
+        objectMap.put("message", expectedErrorMessage);
+        ExceptionResponse expectedResponse = new ExceptionResponse(objectMap);
+
+        when(errorAttributes.getErrorAttributes(eq(webRequest),
+                any(ErrorAttributeOptions.class))).thenReturn(objectMap);
+
+        ResponseEntity<Object> actualResponse =
+                customExceptionHandler.handlePasswordSameAsOldException(passwordSameAsOldException, webRequest);
+
+        assertEquals(expectedHttpStatus, actualResponse.getStatusCode());
+        assertEquals(expectedResponse, actualResponse.getBody());
     }
 
     @Test

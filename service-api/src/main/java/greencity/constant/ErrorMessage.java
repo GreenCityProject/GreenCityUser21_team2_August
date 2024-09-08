@@ -16,6 +16,7 @@ public final class ErrorMessage {
     public static final String EMAIL_TOKEN_EXPIRED = "User late with verify. Token is invalid.";
     public static final String PASSWORD_RESTORE_LINK_ALREADY_SENT =
         "Password restore link already sent, please check your email: ";
+    public static final String NEW_PASSWORD_SAME_AS_OLD = "Password same as old password";
     public static final String REFRESH_TOKEN_NOT_VALID = "Refresh token not valid!";
     public static final String BAD_PASSWORD = "Bad password";
     public static final String USER_ALREADY_REGISTERED_WITH_THIS_EMAIL = "User with this email is already registered";

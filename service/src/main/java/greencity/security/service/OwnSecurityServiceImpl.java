@@ -5,45 +5,22 @@ import greencity.constant.ErrorMessage;
 import greencity.dto.user.UserAdminRegistrationDto;
 import greencity.dto.user.UserManagementDto;
 import greencity.dto.user.UserVO;
-import greencity.entity.Language;
-import greencity.entity.OwnSecurity;
-import greencity.entity.RestorePasswordEmail;
-import greencity.entity.User;
-import greencity.entity.VerifyEmail;
+import greencity.entity.*;
 import greencity.enums.EmailNotification;
 import greencity.enums.Role;
 import greencity.enums.UserStatus;
-import greencity.exception.exceptions.BadRefreshTokenException;
-import greencity.exception.exceptions.BadUserStatusException;
-import greencity.exception.exceptions.EmailNotVerified;
-import greencity.exception.exceptions.PasswordsDoNotMatchesException;
-import greencity.exception.exceptions.UserAlreadyHasPasswordException;
-import greencity.exception.exceptions.UserAlreadyRegisteredException;
-import greencity.exception.exceptions.UserBlockedException;
-import greencity.exception.exceptions.UserDeactivatedException;
-import greencity.exception.exceptions.WrongEmailException;
-import greencity.exception.exceptions.WrongPasswordException;
+import greencity.exception.exceptions.*;
 import greencity.repository.UserRepo;
 import greencity.security.dto.AccessRefreshTokensDto;
 import greencity.security.dto.SuccessSignInDto;
 import greencity.security.dto.SuccessSignUpDto;
-import greencity.security.dto.ownsecurity.EmployeeSignUpDto;
-import greencity.security.dto.ownsecurity.OwnSignInDto;
-import greencity.security.dto.ownsecurity.OwnSignUpDto;
-import greencity.security.dto.ownsecurity.SetPasswordDto;
-import greencity.security.dto.ownsecurity.UpdatePasswordDto;
+import greencity.security.dto.ownsecurity.*;
 import greencity.security.jwt.JwtTool;
 import greencity.security.repository.OwnSecurityRepo;
 import greencity.security.repository.RestorePasswordEmailRepo;
 import greencity.service.EmailService;
 import greencity.service.UserService;
 import io.jsonwebtoken.ExpiredJwtException;
-import java.security.SecureRandom;
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.modelmapper.ModelMapper;
@@ -53,6 +30,14 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * {@inheritDoc}
@@ -427,5 +412,26 @@ public class OwnSecurityServiceImpl implements OwnSecurityService {
             .user(user)
             .build());
         userRepo.save(user);
+    }
+
+    @Override
+    public void resetPassword(ResetPasswordDto dto, String email) {
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new WrongEmailException(ErrorMessage.USER_NOT_FOUND_BY_EMAIL));
+
+        if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getOwnSecurity().getPassword())) {
+            throw new WrongPasswordException(ErrorMessage.BAD_PASSWORD);
+        }
+        if (passwordEncoder.matches(dto.getNewPassword(),  user.getOwnSecurity().getPassword())) {
+            throw new PasswordSameAsOldException(ErrorMessage.NEW_PASSWORD_SAME_AS_OLD);
+        }
+        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+            throw new PasswordsDoNotMatchesException(ErrorMessage.PASSWORDS_DO_NOT_MATCH);
+        }
+
+        user.getOwnSecurity().setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userRepo.save(user);
+
+
     }
 }
